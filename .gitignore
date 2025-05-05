@@ -1,1 +1,4 @@
 /.env
+scopus_api.log
+*.pyc
+

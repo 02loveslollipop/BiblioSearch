@@ -1,69 +1,84 @@
-def clean_text(text):
-    """
-    Clean text by removing special characters and numbers, converting to lowercase,
-    and splitting into individual words.
-    """
-    import re
-    # Convert to lowercase and remove special characters
-    text = re.sub(r'[^a-zA-Z\s]', ' ', text.lower())
-    # Split into words and remove empty strings and single characters
-    words = [word.strip() for word in text.split() if len(word.strip()) > 2]
-    return words
+import re
 
 def parse_results(entries):
-    """
-    Extract keywords, titles, affiliations, countries, years and authors from Scopus API entries.
-    Combines keywords and title words for word cloud generation.
-    """
-    keywords = []
+    """Extract unique words (from keywords, title, description), affiliations, countries, years, and authors from Scopus entries"""
+    all_words_for_cloud = []
     orgs = []
     countries = []
     years = []
     authors = []
-    
-    # Common English stop words to filter out
-    stop_words = {'and', 'the', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
-    
+
     for entry in entries:
-        # Keywords from authkeywords
+        article_unique_words = set()
+
+        # Extract and process keywords
         if 'authkeywords' in entry:
-            kws = entry['authkeywords']
-            if isinstance(kws, str):
-                keywords.extend([k.strip().lower() for k in kws.split('|')])
-            elif isinstance(kws, list):
-                keywords.extend([k.lower() for k in kws])
-        
-        # Words from title
+            keywords_str = entry['authkeywords'] or ""
+            entry_keywords = keywords_str.split(' | ')
+            for keyword in entry_keywords:
+                cleaned_keyword = keyword.strip().lower()
+                if cleaned_keyword:
+                    article_unique_words.add(cleaned_keyword)
+
+        # Extract and process title
         if 'dc:title' in entry:
-            title_words = clean_text(entry['dc:title'])
-            # Filter out stop words
-            title_words = [w for w in title_words if w not in stop_words]
-            keywords.extend(title_words)
-        
-        # Authors
+            title = entry['dc:title'] or ""
+            words = re.findall(r'\b\w+\b', title.lower())
+            article_unique_words.update(words)
+
+        # Extract and process description
+        if 'dc:description' in entry:
+            description = entry['dc:description'] or ""
+            words = re.findall(r'\b\w+\b', description.lower())
+            article_unique_words.update(words)
+
+        all_words_for_cloud.extend(list(article_unique_words))
+
+        # Extract affiliations and countries
+        if 'affiliation' in entry:
+            affiliations = entry['affiliation']
+            if isinstance(affiliations, list):
+                for aff in affiliations:
+                    if isinstance(aff, dict):
+                        if 'affilname' in aff:
+                            orgs.append(aff['affilname'])
+                        if 'affiliation-country' in aff:
+                            countries.append(aff['affiliation-country'])
+            elif isinstance(affiliations, dict):
+                if 'affilname' in affiliations:
+                    orgs.append(affiliations['affilname'])
+                if 'affiliation-country' in affiliations:
+                    countries.append(affiliations['affiliation-country'])
+
+        # Extract year
+        if 'prism:coverDate' in entry:
+            year_str = entry['prism:coverDate']
+            if year_str and isinstance(year_str, str): # Check if string and not empty
+                year = year_str.split('-')[0]
+                try: # Add try-except for robustness
+                    years.append(int(year))
+                except ValueError:
+                    pass # Ignore if year is not a valid integer
+
+        # Extract authors
+        # Prioritize the 'author' list/dict if available
+        author_found = False
         if 'author' in entry:
-            for author in entry['author']:
-                # Use authname if available, otherwise construct from given-name and surname
-                author_name = author.get('authname', '')
-                if not author_name and 'surname' in author:
-                    given_name = author.get('given-name', '')
-                    surname = author.get('surname', '')
-                    author_name = f"{surname}, {given_name}" if given_name else surname
-                if author_name:
-                    authors.append(author_name)
+            entry_authors = entry['author']
+            if isinstance(entry_authors, list):
+                for author in entry_authors:
+                    # Check if author is a dict and has 'authname'
+                    if isinstance(author, dict) and 'authname' in author:
+                        authors.append(author['authname'])
+                        author_found = True # Mark as found
+            elif isinstance(entry_authors, dict) and 'authname' in entry_authors: # Handle single author case
+                authors.append(entry_authors['authname'])
+                author_found = True # Mark as found
         
-        # Affiliations
-        for aff in entry.get('affiliation', []):
-            orgs.append(aff.get('affilname', 'Unknown'))
-            countries.append(aff.get('affiliation-country', 'Unknown'))
-        
-        # Year
-        date_str = entry.get('prism:coverDate')
-        if date_str:
-            try:
-                year = int(date_str[:4])
-                years.append(year)
-            except Exception:
-                pass
-    
-    return keywords, orgs, countries, years, authors
+        # If no author found in 'author' list/dict, check 'dc:creator'
+        if not author_found and 'dc:creator' in entry:
+            creator_name = entry['dc:creator']
+            if creator_name and isinstance(creator_name, str):
+                authors.append(creator_name)
+
+    return all_words_for_cloud, orgs, countries, years, authors
