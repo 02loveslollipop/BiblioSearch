@@ -115,12 +115,7 @@ if 'results_available' not in st.session_state:
 
 # Set api_key as a persistent state variable
 if 'api_key' not in st.session_state:
-    try:
-        api_key = st.secrets.get("api_key")
-    except FileNotFoundError:
-        api_key = None
-    if not api_key:
-        api_key = os.getenv("API_KEY")
+    api_key = os.getenv("API_KEY")
     if not api_key:
         api_key = st.text_input("Enter your Scopus API Key", type="password")
     st.session_state['api_key'] = api_key
