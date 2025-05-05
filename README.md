@@ -1,6 +1,6 @@
-# Scopus Biblio Search
+# Biblio Search
 
-> A simple tool to visualize information from Scopus using a search equation and Scopus API
+> A simple tool to visualize articles using a search equation and Scopus API
 
 ## Disclaimer
 
@@ -8,7 +8,7 @@
 
 ## Introduction
 
-Scopus Biblio Search is a Streamlit-based tool that allows to visualize data obtained from the Scopus database. The application offers a variety of visualization tools including wordclouds, bar charts, choropleth maps, and animations to explore publication trends, author collaborations, geographical distributions, and keyword frequencies.
+Biblio Search is a Streamlit-based tool that allows to visualize data obtained from the Scopus database. The application offers a variety of visualization tools including wordclouds, bar charts, choropleth maps, and animations to explore publication trends, author collaborations, geographical distributions, and keyword frequencies.
 
 ## Features
 
@@ -36,7 +36,7 @@ Scopus Biblio Search is a Streamlit-based tool that allows to visualize data obt
 
 1. **Clone the repository:**
    ```sh
-   git clone https://github.com/02loveslollipop/scopusBiblioSearch.git
+   git clone https://github.com/02loveslollipop/BiblioSearch.git
    cd scopusBiblioSearch
    ```
 
