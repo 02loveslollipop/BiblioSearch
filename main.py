@@ -120,13 +120,13 @@ if 'results_available' not in st.session_state:
 if 'api_key' not in st.session_state:
     api_key = os.getenv("API_KEY")
     if not api_key:
-        api_key = st.text_input("Enter your Scopus API Key", type="password")
+        api_key = st.text_input("Enter your Scopus API Key, get one from [Elsevier developer portal](https://dev.elsevier.com/apikeys/)", type="password")
     st.session_state['api_key'] = api_key
 else:
     api_key = st.session_state['api_key']
 
 if not api_key:
-    st.warning("API key not found. Please enter your API key above.")
+    st.warning("API key not found. Please enter your API key above. If you don't trust this app, check the [github repo](%s) and run it locally" % "https://github.com/02loveslollipop/scopusBiblioSearch"
 
 api = controllers.ScopusAPI(api_key)    
 
