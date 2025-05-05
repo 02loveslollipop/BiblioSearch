@@ -9,6 +9,9 @@ from wordcloud import WordCloud
 import plotly.express as px
 from datetime import datetime
 from utils import limit_dataframe_for_graph, parse_results, filter_by_period
+from utils.animations import (parse_results_for_animation, prepare_rolling_data, 
+                           generate_animated_country_map, generate_animated_author_chart,
+                           generate_animated_word_cloud_gif, calculate_max_window)
 import json # Added import
 
 # --- Caching Helper Functions ---
@@ -235,7 +238,7 @@ if st.session_state.results_available and st.session_state.entries:
     # --- End Export Buttons ---
 
     # Tabs
-    tab1, tab2 = st.tabs(["Overview", "Period Analysis"])
+    tab1, tab2, tab3 = st.tabs(["Overview", "Period Analysis", "Animations"])
     with tab1:
         st.subheader("Word Cloud (Keywords, Title, Description)") # Updated subheader
         if words_for_cloud: # Use updated variable
@@ -349,3 +352,71 @@ if st.session_state.results_available and st.session_state.entries:
                 if fig_f:
                     st.subheader("Publications by Year (Period)")
                     st.plotly_chart(fig_f)
+
+    # --- New Animations Tab ---
+    with tab3:
+        st.header("Animated Visualizations")
+        st.markdown("""
+            These animations show trends over time based on data aggregated over a rolling window.
+            You can adjust the window size using the slider below.
+        """)
+
+        # Prepare data for animations (run once)
+        with st.spinner("Preparing data for animations..."):
+            anim_df = parse_results_for_animation(st.session_state.entries)
+            if anim_df.empty:
+                st.warning("Not enough date information in the results to generate animations.")
+            else:
+                # Calculate max window size based on dataset timespan
+                max_window_size = calculate_max_window(anim_df)
+                
+                # Add slider for rolling window selection
+                window_size = st.slider(
+                    "Rolling Window Size (months)", 
+                    min_value=1, 
+                    max_value=max_window_size,
+                    value=min(6, max_window_size),  # Default to 6 months if possible
+                    step=1,
+                    help="Select 1 month for no rolling window, or larger values to see trends over time"
+                )
+                
+                # Generate rolling data with selected window size
+                country_anim_df, author_anim_df, word_anim_list, anim_months = prepare_rolling_data(
+                    anim_df, months_window=window_size
+                )
+                
+                # Show a description of the selected rolling window
+                if window_size == 1:
+                    st.info("📊 Showing data by month (no rolling)")
+                else:
+                    st.info(f"📊 Showing data with a {window_size}-month rolling window")
+
+        if not anim_df.empty and anim_months:
+            st.markdown("---")
+            st.subheader("Animated Country Map")
+            with st.spinner("Generating country map animation..."):
+                country_map_anim_fig = generate_animated_country_map(country_anim_df, window_size=window_size)
+            if country_map_anim_fig:
+                st.plotly_chart(country_map_anim_fig, use_container_width=True)
+            else:
+                st.info("Could not generate animated country map (perhaps no country data or animation frames).")
+
+            st.markdown("---")
+            st.subheader("Animated Top Authors Chart")
+            with st.spinner("Generating author chart animation..."):
+                author_chart_anim_fig = generate_animated_author_chart(author_anim_df, window_size=window_size)
+            if author_chart_anim_fig:
+                st.plotly_chart(author_chart_anim_fig, use_container_width=True)
+            else:
+                st.info("Could not generate animated author chart (perhaps no author data or animation frames).")
+
+            st.markdown("---")
+            st.subheader("Animated Word Cloud")
+            with st.spinner("Generating word cloud animation (this may take a while)..."):
+                word_cloud_anim_gif = generate_animated_word_cloud_gif(word_anim_list, window_size=window_size)
+            if word_cloud_anim_gif:
+                st.image(word_cloud_anim_gif, caption=f"Animated Word Cloud ({window_size}-Month Rolling Window)")
+            else:
+                st.info("Could not generate animated word cloud (perhaps no word data or animation frames).")
+        elif not anim_df.empty:
+             st.warning("Could not generate animation frames. Check if data spans multiple months.")
