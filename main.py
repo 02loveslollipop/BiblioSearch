@@ -126,7 +126,7 @@ else:
     api_key = st.session_state['api_key']
 
 if not api_key:
-    st.warning("API key not found. Please enter your API key above. If you don't trust this app, check the [github repo](%s) and run it locally" % "https://github.com/02loveslollipop/scopusBiblioSearch"
+    st.warning("API key not found. Please enter your API key above. If you don't trust this app, check the [github repo](%s) and run it locally" % "https://github.com/02loveslollipop/scopusBiblioSearch")
 
 api = controllers.ScopusAPI(api_key)    
 
