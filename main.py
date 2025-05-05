@@ -120,7 +120,7 @@ if 'results_available' not in st.session_state:
 if 'api_key' not in st.session_state:
     api_key = os.getenv("API_KEY")
     if not api_key:
-        api_key = st.text_input("Enter your Scopus API Key, get one from [Elsevier developer portal](https://dev.elsevier.com/apikeys/)", type="password")
+        api_key = st.text_input("Enter your Scopus API Key, get one from [Elsevier developer portal](https://dev.elsevier.com/apikey/manage)", type="password")
     st.session_state['api_key'] = api_key
 else:
     api_key = st.session_state['api_key']
