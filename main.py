@@ -99,7 +99,7 @@ def generate_country_map(countries_list, title):
 # load environment variables from .env file
 dotenv.load_dotenv()
 
-st.set_page_config(page_title="Scopus Visual Bibliometrics", page_icon=":bar_chart:", layout="wide")
+st.set_page_config(page_title="BiblioSearch", page_icon=":bar_chart:", layout="wide")
 
 if 'current_page' not in st.session_state:
     st.session_state.current_page = 0
@@ -130,7 +130,7 @@ if not api_key:
 
 api = controllers.ScopusAPI(api_key)    
 
-st.title("Scopus Visual Bibliometrics")
+st.title("BiblioSearch")
 
 st.markdown("This app allows you to visualize bibliometric data from Scopus.")
 
